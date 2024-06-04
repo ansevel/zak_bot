@@ -6,7 +6,7 @@ from app.models.purchase import Subscription
 
 
 class User(Base):
-    chat_id = Column(Integer, unique=True, nullable=False)
+    chat_id = Column(Integer, unique=True, nullable=False, primary_key=True)
     first_name = Column(String(30), unique=False, nullable=True)
     last_name = Column(String(50), unique=False, nullable=True)
     username = Column(String(30), unique=False, nullable=True)

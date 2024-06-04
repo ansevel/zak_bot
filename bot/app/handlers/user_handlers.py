@@ -10,6 +10,8 @@ from app.constants.info_messages import (EMPTY_LIST, HELP_MESSAGE,
                                          SUBSCRIPTION_DELETED)
 from app.core.config import settings
 from app.core.db import AsyncSessionLocal
+from app.crud.purchase import purchase_crud
+from app.crud.relations import subscription_crud
 from app.crud.user import user_crud
 from app.keyboards.purchase import (add_subscription_button,
                                     delete_subscription_button,
@@ -44,7 +46,9 @@ async def command_help_process(message: Message):
 
 @router.message(Command(commands='list'))
 async def command_list_process(message: Message):
-    # There will be get_purchase_list here
+    async with AsyncSessionLocal() as session:
+        purchases = await purchase_crud.get_by_user(
+            message.from_user.id, session)
     await message.answer(text=EMPTY_LIST)
 
 
@@ -72,7 +76,16 @@ async def find_purchase(message: Message):
 
 @router.callback_query(F.data == 'add_subscription')
 async def add_subscription(callback: CallbackQuery):
-    # add_to_DB
+    num = '0142200001324013160'
+    async with AsyncSessionLocal() as session:
+        purchase_obj = await get_purchase_from_web(num)
+        purchase_db = await purchase_crud.get_purchase_by_number(num, session)
+        if purchase_db is None:
+            purchase_db = await purchase_crud.create(
+                purchase_obj, session)
+        user_db = await user_crud.get_user_by_chat_id(
+            callback.from_user.id, session)
+        await purchase_crud.add_subscriber(purchase_db, user_db, session)
     await callback.message.edit_reply_markup(
         reply_markup=delete_subscription_button
     )

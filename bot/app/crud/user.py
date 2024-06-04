@@ -7,6 +7,7 @@ from app.models.user import User
 
 
 class UserCRUD:
+
     async def get_user_by_chat_id(
             self,
             chat_id: int,

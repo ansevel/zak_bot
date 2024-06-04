@@ -1,5 +1,5 @@
 from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey,
-                        String, Text)
+                        Integer, String, Text)
 from sqlalchemy.orm import relationship
 
 from app.core.db import Base
@@ -10,8 +10,8 @@ class Subscription(Base):
         ForeignKey('purchase.id', ondelete='CASCADE'),
         primary_key=True
         )
-    user_id = Column(
-        ForeignKey('user.id', ondelete='CASCADE'),
+    user_chat_id = Column(
+        ForeignKey('user.chat_id', ondelete='CASCADE'),
         primary_key=True
         )
 
@@ -32,26 +32,31 @@ class PurchasePreference(Base):
 class PurchaseRequirement(Base):
     purchase_id = Column(
         'purchase_id',
-        ForeignKey('purchase.id', ondelete='CASCADE')
+        ForeignKey('purchase.id', ondelete='CASCADE'),
+        primary_key=True
         )
     requirement_id = Column(
         'requirement_id',
-        ForeignKey('requirement.id', ondelete='CASCADE')
+        ForeignKey('requirement.id', ondelete='CASCADE'),
+        primary_key=True
         )
 
 
 class PurchaseRestriction(Base):
     purchase_id = Column(
         'purchase_id',
-        ForeignKey('purchase.id', ondelete='CASCADE')
+        ForeignKey('purchase.id', ondelete='CASCADE'),
+        primary_key=True
         )
     restriction_id = Column(
         'restriction_id',
-        ForeignKey('restriction.id', ondelete='CASCADE')
+        ForeignKey('restriction.id', ondelete='CASCADE'),
+        primary_key=True
         )
 
 
 class Purchase(Base):
+    id = Column(Integer, primary_key=True)
     number = Column(String(30), unique=True, nullable=False)
     object_info = Column(Text, unique=False, nullable=False)
     url = Column(String(150), unique=False, nullable=False)
@@ -62,31 +67,46 @@ class Purchase(Base):
     subscribers = relationship(
         'User',
         secondary=Subscription.__tablename__,
-        back_populates='subscriptions'
+        back_populates='subscriptions',
+        lazy='joined'
     )
     preferences = relationship(
-        'Preference', secondary=PurchasePreference.__tablename__)
+        'Preference',
+        secondary=PurchasePreference.__tablename__,
+        lazy='joined')
     requirements = relationship(
-        'Requirement', secondary=PurchaseRequirement.__tablename__)
+        'Requirement', secondary=PurchaseRequirement.__tablename__,
+        lazy='joined')
     restrictions = relationship(
-        'Restriction', secondary=PurchaseRestriction.__tablename__)
+        'Restriction', secondary=PurchaseRestriction.__tablename__,
+        lazy='joined')
+
+    def from_dict(self, data):
+        for field in ['number', 'object_info', 'url', 'customer',
+                      'end_datetime', 'price']:
+            if field in data:
+                setattr(self, field, data[field])
 
 
 class Preference(Base):
+    id = Column(Integer, primary_key=True)
     long_description = Column(Text, unique=True, nullable=False)
     short_description = Column(Text, unique=False, nullable=True)
 
 
 class Requirement(Base):
+    id = Column(Integer, primary_key=True)
     long_description = Column(Text, unique=True, nullable=False)
     short_description = Column(Text, unique=False, nullable=True)
 
 
 class Restriction(Base):
+    id = Column(Integer, primary_key=True)
     dlong_description = Column(Text, unique=True, nullable=False)
     short_description = Column(Text, unique=False, nullable=True)
 
 
 class InfoMessage(Base):
+    id = Column(Integer, primary_key=True)
     info_tomorrow = Column(Boolean, default=False)
     info_today = Column(Boolean, default=False)
