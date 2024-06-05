@@ -82,7 +82,7 @@ async def command_list_process(message: Message):
 async def find_purchase(message: Message):
     number = get_purchse_num_from_user(message.text)
     if number is None:
-        await message.answer(text='Здусь будет ошибка введенных данных')
+        await message.answer(text='Здесь будет ошибка введенных данных')
     purchase_obj = await get_purchase_from_web(number)
     formatted_data = purchase_obj.common_data_message_text()
     formatted_data = purchase_obj.add_long_additional_info(formatted_data)

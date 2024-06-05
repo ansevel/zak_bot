@@ -76,8 +76,7 @@ class PurchaseCRUD:
                 Purchase.id == purchase.id
             )
         )
-        purchase_db = purchase_db.scalars().first()
-        return purchase_db
+        return purchase_db.scalars().first()
 
     async def get_multi_by_user_id(  # Reform and delete
             self,
