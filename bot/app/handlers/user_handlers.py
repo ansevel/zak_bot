@@ -18,6 +18,7 @@ from app.keyboards.purchase import (add_subscription_button,
                                     get_inline_button)
 from app.schemas.purchase import Purchase
 from app.schemas.user import UserCreate
+from app.services.utils import get_purchase_num_form_message
 from app.services.parser import get_purchase_from_web
 
 router = Router()
@@ -62,13 +63,14 @@ async def command_list_process(message: Message):
                 message_count = ceil(length / MAX_LENGTH_MESSAGE)
                 for _ in range(message_count - 1):
                     await message.answer(
-                        text=formatted_data[offset:MAX_LENGTH_MESSAGE + offset])
+                        text=formatted_data[offset:MAX_LENGTH_MESSAGE + offset]
+                    )
                     offset += MAX_LENGTH_MESSAGE
                 await message.answer(text=formatted_data[offset:],
-                                     reply_markup=delete_subscritpion)
+                                     reply_markup=delete_subscription_button)
             else:
                 await message.answer(text=formatted_data,
-                                     reply_markup=delete_subscritpion)
+                                     reply_markup=delete_subscription_button)
     else:
         await message.answer(text=EMPTY_LIST)
 
@@ -97,7 +99,7 @@ async def find_purchase(message: Message):
 
 @router.callback_query(F.data == 'add_subscription')
 async def add_subscription(callback: CallbackQuery):
-    num = '0142200001324013160'
+    num = get_purchase_num_form_message(callback.message.text)
     async with AsyncSessionLocal() as session:
         purchase_obj = await get_purchase_from_web(num)
         purchase_db = await purchase_crud.get_purchase_by_number(num, session)
