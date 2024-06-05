@@ -8,6 +8,9 @@ class AdditionalInfo(BaseModel):
     long_description: str
     short_description: Optional[str] = None
 
+    class Config:
+        from_attributes = True
+
 
 class Purchase(BaseModel):
     number: str
@@ -17,10 +20,13 @@ class Purchase(BaseModel):
     end_datetime: datetime
     price: float
     is_active: bool = False
-    subscribers: 'Optional[list[UserRead]]' = None
+    # subscribers: 'Optional[list[User]]' = None
     preferences: Optional[list[AdditionalInfo]] = None
     requirements: Optional[list[AdditionalInfo]] = None
     restrictions: Optional[list[AdditionalInfo]] = None
+
+    class Config:
+        from_attributes = True
 
     def common_data_message_text(self) -> str:
         return (
@@ -61,5 +67,5 @@ class Purchase(BaseModel):
         return formatted_data
 
 
-from app.schemas.user import UserRead
+from app.schemas.user import User
 Purchase.model_rebuild()

@@ -12,9 +12,12 @@ class UserCreate(BaseModel):
     is_admin: bool
 
 
-class UserRead(UserCreate):
+class User(UserCreate):
     subscriptions: 'Optional[Purchase]' = None
+
+    class Config:
+        from_attributes = True
 
 
 from app.schemas.purchase import Purchase
-UserRead.model_rebuild()
+User.model_rebuild()

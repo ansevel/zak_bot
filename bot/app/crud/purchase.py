@@ -1,8 +1,10 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import lazyload
 
 from app.models.purchase import (Purchase, Preference, Restriction,
                                  Requirement)
+from app.models.user import User
 
 
 class AddInfoCRUD:
@@ -71,17 +73,16 @@ class PurchaseCRUD:
 
         return purchase
 
-    async def get_by_user(
+    async def get_multi_by_user_id(  # Reform and delete
             self,
             chat_id,
             session: AsyncSession
     ):
         purchases = await session.execute(
-            select(Purchase).where(
-                Purchase.subscribers.any(chat_id=chat_id)
-            )
+            select(Purchase).join(Purchase.subscribers).where(
+                User.chat_id == chat_id)
         )
-        return purchases.scalars().all()
+        return purchases.unique().scalars().all()
 
     async def add_subscriber(
             self,

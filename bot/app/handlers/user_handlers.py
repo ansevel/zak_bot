@@ -16,6 +16,7 @@ from app.crud.user import user_crud
 from app.keyboards.purchase import (add_subscription_button,
                                     delete_subscription_button,
                                     get_inline_button)
+from app.schemas.purchase import Purchase
 from app.schemas.user import UserCreate
 from app.services.parser import get_purchase_from_web
 
@@ -47,9 +48,29 @@ async def command_help_process(message: Message):
 @router.message(Command(commands='list'))
 async def command_list_process(message: Message):
     async with AsyncSessionLocal() as session:
-        purchases = await purchase_crud.get_by_user(
+        subscriptions_db = await purchase_crud.get_multi_by_user_id(
             message.from_user.id, session)
-    await message.answer(text=EMPTY_LIST)
+    if subscriptions_db:
+        for subscription in subscriptions_db:
+            purchase_obj = Purchase.model_validate(subscription)
+            formatted_data = purchase_obj.common_data_message_text()
+            formatted_data = purchase_obj.add_long_additional_info(
+                formatted_data)
+            length = len(formatted_data)
+            if length > MAX_LENGTH_MESSAGE:
+                offset = 0
+                message_count = ceil(length / MAX_LENGTH_MESSAGE)
+                for _ in range(message_count - 1):
+                    await message.answer(
+                        text=formatted_data[offset:MAX_LENGTH_MESSAGE + offset])
+                    offset += MAX_LENGTH_MESSAGE
+                await message.answer(text=formatted_data[offset:],
+                                     reply_markup=delete_subscritpion)
+            else:
+                await message.answer(text=formatted_data,
+                                     reply_markup=delete_subscritpion)
+    else:
+        await message.answer(text=EMPTY_LIST)
 
 
 @router.message(F.text.isdigit())
