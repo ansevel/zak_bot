@@ -7,7 +7,7 @@ from aiogram.types import CallbackQuery, Message
 from app.constants.common import MAX_LENGTH_MESSAGE
 from app.constants.info_messages import (EMPTY_LIST, HELP_MESSAGE,
                                          START_MESSAGE, SUBSCRIPTION_ADDED,
-                                         SUBSCRIPTION_DELETED)
+                                         SUBSCRIPTION_DELETED, LIST)
 from app.core.config import settings
 from app.core.db import AsyncSessionLocal
 from app.crud.purchase import (preference_crud, purchase_crud,
@@ -18,7 +18,8 @@ from app.keyboards.purchase import (add_subscription_button,
                                     get_inline_button)
 from app.schemas.purchase import Purchase
 from app.schemas.user import UserCreate
-from app.services.utils import get_purchase_num_form_message
+from app.services.utils import (get_purchase_num_form_message,
+                                get_purchse_num_from_user)
 from app.services.parser import get_purchase_from_web
 
 router = Router()
@@ -52,6 +53,7 @@ async def command_list_process(message: Message):
         subscriptions_db = await purchase_crud.get_multi_by_user_id(
             message.from_user.id, session)
     if subscriptions_db:
+        await message.answer(text=LIST)
         for subscription in subscriptions_db:
             purchase_obj = Purchase.model_validate(subscription)
             formatted_data = purchase_obj.common_data_message_text()
@@ -75,9 +77,13 @@ async def command_list_process(message: Message):
         await message.answer(text=EMPTY_LIST)
 
 
-@router.message(F.text.isdigit())
+# @router.message(F.text.isdigit())
+@router.message()
 async def find_purchase(message: Message):
-    purchase_obj = await get_purchase_from_web(message.text)
+    number = get_purchse_num_from_user(message.text)
+    if number is None:
+        await message.answer(text='Здусь будет ошибка введенных данных')
+    purchase_obj = await get_purchase_from_web(number)
     formatted_data = purchase_obj.common_data_message_text()
     formatted_data = purchase_obj.add_long_additional_info(formatted_data)
     # if purchase_data.get('errors') is not None:  # raise exception > errors handler
@@ -91,10 +97,10 @@ async def find_purchase(message: Message):
                 text=formatted_data[offset:MAX_LENGTH_MESSAGE + offset])
             offset += MAX_LENGTH_MESSAGE
         await message.answer(text=formatted_data[offset:],
-                             reply_markup=get_inline_button(message))
+                             reply_markup=await get_inline_button(number))
     else:
         await message.answer(text=formatted_data,
-                             reply_markup=get_inline_button(message))
+                             reply_markup=await get_inline_button(number))
 
 
 @router.callback_query(F.data == 'add_subscription')
@@ -145,7 +151,12 @@ async def add_subscription(callback: CallbackQuery):
 
 @router.callback_query(F.data == 'delete_subscription')
 async def delete_subscritpion(callback: CallbackQuery):
-    # delete subscription
+    async with AsyncSessionLocal() as session:
+        num = get_purchase_num_form_message(callback.message.text)
+        purchase = await purchase_crud.get_purchase_by_number(num, session)
+        user = await user_crud.get_user_by_chat_id(
+            callback.from_user.id, session)
+        await purchase_crud.delete_subscription(purchase, user, session)
     await callback.message.edit_reply_markup(
         reply_markup=add_subscription_button
     )

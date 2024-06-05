@@ -1,6 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import lazyload
+from sqlalchemy.orm import joinedload
 
 from app.models.purchase import (Purchase, Preference, Restriction,
                                  Requirement)
@@ -66,12 +66,18 @@ class PurchaseCRUD:
         data = purchase_in.dict()
         purchase = Purchase()
         purchase.from_dict(data)
-        purchase.is_active = True
         session.add(purchase)
         await session.commit()
         await session.refresh(purchase)
 
-        return purchase
+        # This block to prevent MissingGreenlet (see https://sqlalche.me/e/14/xd2s)
+        purchase_db = await session.execute(
+            select(Purchase).options(joinedload(Purchase.subscribers)).where(
+                Purchase.id == purchase.id
+            )
+        )
+        purchase_db = purchase_db.scalars().first()
+        return purchase_db
 
     async def get_multi_by_user_id(  # Reform and delete
             self,
@@ -91,7 +97,21 @@ class PurchaseCRUD:
             session: AsyncSession
     ):
         purchase.subscribers.append(user)
+        purchase.is_active = True
         session.add(purchase)
+        await session.commit()
+        await session.refresh(purchase)
+        return purchase
+
+    async def delete_subscription(
+            self,
+            purchase,
+            user,
+            session: AsyncSession
+    ):
+        purchase.subscribers.remove(user)
+        if not purchase.subscribers:
+            purchase.is_active = False
         await session.commit()
         await session.refresh(purchase)
         return purchase
@@ -113,7 +133,6 @@ class PurchaseCRUD:
         session.add(purchase)
         await session.commit()
         await session.refresh(purchase)
-        return purchase
 
 
 purchase_crud = PurchaseCRUD()

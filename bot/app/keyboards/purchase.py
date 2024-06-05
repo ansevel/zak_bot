@@ -1,4 +1,6 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from app.core.db import AsyncSessionLocal
+from app.crud.purchase import purchase_crud
 
 add_subscription_button = InlineKeyboardMarkup(
     inline_keyboard=[[
@@ -15,6 +17,9 @@ delete_subscription_button = InlineKeyboardMarkup(
 )
 
 
-def get_inline_button(message: Message) -> InlineKeyboardMarkup:
-    #  Check purchase number in Subscription
+async def get_inline_button(number: str) -> InlineKeyboardMarkup:
+    async with AsyncSessionLocal() as session:
+        purchase = await purchase_crud.get_purchase_by_number(number, session)
+        if purchase is not None:
+            return delete_subscription_button
     return add_subscription_button
