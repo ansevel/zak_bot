@@ -5,6 +5,13 @@ from sqlalchemy.orm import relationship
 from app.core.db import Base
 
 
+class AdditionalInfo(Base):
+    __abstract__ = True
+    id = Column(Integer, primary_key=True)
+    long_description = Column(Text, unique=True, nullable=False)
+    short_description = Column(Text, unique=False, nullable=True)
+
+
 class Subscription(Base):
     purchase_id = Column(
         ForeignKey('purchase.id', ondelete='CASCADE'),
@@ -88,22 +95,16 @@ class Purchase(Base):
                 setattr(self, field, data[field])
 
 
-class Preference(Base):
-    id = Column(Integer, primary_key=True)
-    long_description = Column(Text, unique=True, nullable=False)
-    short_description = Column(Text, unique=False, nullable=True)
+class Preference(AdditionalInfo):
+    pass
 
 
-class Requirement(Base):
-    id = Column(Integer, primary_key=True)
-    long_description = Column(Text, unique=True, nullable=False)
-    short_description = Column(Text, unique=False, nullable=True)
+class Requirement(AdditionalInfo):
+    pass
 
 
-class Restriction(Base):
-    id = Column(Integer, primary_key=True)
-    dlong_description = Column(Text, unique=True, nullable=False)
-    short_description = Column(Text, unique=False, nullable=True)
+class Restriction(AdditionalInfo):
+    pass
 
 
 class InfoMessage(Base):

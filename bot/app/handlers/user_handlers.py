@@ -10,8 +10,8 @@ from app.constants.info_messages import (EMPTY_LIST, HELP_MESSAGE,
                                          SUBSCRIPTION_DELETED)
 from app.core.config import settings
 from app.core.db import AsyncSessionLocal
-from app.crud.purchase import purchase_crud
-from app.crud.relations import subscription_crud
+from app.crud.purchase import (preference_crud, purchase_crud,
+                               restriction_crud, requirement_crud)
 from app.crud.user import user_crud
 from app.keyboards.purchase import (add_subscription_button,
                                     delete_subscription_button,
@@ -85,10 +85,38 @@ async def add_subscription(callback: CallbackQuery):
                 purchase_obj, session)
         user_db = await user_crud.get_user_by_chat_id(
             callback.from_user.id, session)
+
         await purchase_crud.add_subscriber(purchase_db, user_db, session)
+
+        preferences = []
+        if purchase_obj.preferences is not None:
+            for p in purchase_obj.preferences:
+                preferences.append(
+                    await preference_crud.get_or_create(p, session)
+                )
+
+        restrictions = []
+        if purchase_obj.restrictions is not None:
+            for r in purchase_obj.restrictions:
+                restrictions.append(
+                    await restriction_crud.get_or_create(r, session)
+                )
+
+        requirements = []
+        if purchase_obj.requirements is not None:
+            for r in purchase_obj.requirements:
+                requirements.append(
+                    await requirement_crud.get_or_create(r, session)
+                )
+
+        await purchase_crud.append_add_info(
+            purchase_db, preferences, requirements, restrictions, session
+        )
+
     await callback.message.edit_reply_markup(
         reply_markup=delete_subscription_button
     )
+    # DB add error
     await callback.answer(text=SUBSCRIPTION_ADDED)
 
 
