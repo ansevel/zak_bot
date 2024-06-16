@@ -133,6 +133,13 @@ class PurchaseCRUD:
         await session.commit()
         await session.refresh(purchase)
 
+    # async def check_user_subscribed(
+    #         self,
+    #         purchase,
+    #         user_id,
+    #         session: AsyncSession
+    # ):
+
 
 purchase_crud = PurchaseCRUD()
 preference_crud = AddInfoCRUD(Preference)

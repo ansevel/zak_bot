@@ -17,7 +17,7 @@ delete_subscription_button = InlineKeyboardMarkup(
 )
 
 
-async def get_inline_button(number: str) -> InlineKeyboardMarkup:
+async def get_inline_button(number: str, user_id) -> InlineKeyboardMarkup:
     # async with AsyncSessionLocal() as session:
     #     purchase = await purchase_crud.get_purchase_by_number(number, session)
     #     if purchase is not None:
