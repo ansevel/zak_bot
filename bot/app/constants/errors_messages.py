@@ -1,0 +1,1 @@
+REQUEST_ERROR_MESSAGE = 'Сервер zakupki.gov не отвечает. Повторите попытку позже'
