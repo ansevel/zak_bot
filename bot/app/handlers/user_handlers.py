@@ -18,7 +18,7 @@ from app.keyboards.purchase import (add_subscription_button,
                                     get_inline_button)
 from app.schemas.purchase import Purchase
 from app.schemas.user import UserCreate
-from app.services.utils import (get_purchase_num_form_message,
+from app.services.utils import (get_purchase_num_from_message,
                                 get_purchse_num_from_user)
 from app.services.parser import get_purchase_from_web
 
@@ -105,7 +105,7 @@ async def find_purchase(message: Message):
 
 @router.callback_query(F.data == 'add_subscription')
 async def add_subscription(callback: CallbackQuery):
-    num = get_purchase_num_form_message(callback.message.text)
+    num = get_purchase_num_from_message(callback.message.text)
     async with AsyncSessionLocal() as session:
         purchase_obj = await get_purchase_from_web(num)
         purchase_db = await purchase_crud.get_purchase_by_number(num, session)
@@ -152,7 +152,7 @@ async def add_subscription(callback: CallbackQuery):
 @router.callback_query(F.data == 'delete_subscription')
 async def delete_subscritpion(callback: CallbackQuery):
     async with AsyncSessionLocal() as session:
-        num = get_purchase_num_form_message(callback.message.text)
+        num = get_purchase_num_from_message(callback.message.text)
         purchase = await purchase_crud.get_purchase_by_number(num, session)
         user = await user_crud.get_user_by_chat_id(
             callback.from_user.id, session)
