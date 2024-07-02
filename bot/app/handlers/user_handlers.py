@@ -5,11 +5,14 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message
 
 from app.constants.common import MAX_LENGTH_MESSAGE
+from app.constants.errors_messages import (NOT_FOUND_MESSAGE,
+                                           REQUEST_ERROR_MESSAGE)
 from app.constants.info_messages import (EMPTY_LIST, HELP_MESSAGE,
                                          START_MESSAGE, SUBSCRIPTION_ADDED,
                                          SUBSCRIPTION_DELETED, LIST)
 from app.core.config import settings
 from app.core.db import AsyncSessionLocal
+from app.core.exceptions import ParserConnectError, PurchaseNotFoundError
 from app.crud.purchase import (preference_crud, purchase_crud,
                                restriction_crud, requirement_crud)
 from app.crud.user import user_crud
@@ -77,30 +80,32 @@ async def command_list_process(message: Message):
         await message.answer(text=EMPTY_LIST)
 
 
-# @router.message(F.text.isdigit())
 @router.message()
 async def find_purchase(message: Message):
     number = get_purchse_num_from_user(message.text)
     if number is None:
         await message.answer(text='Здесь будет ошибка введенных данных')
-    purchase_obj = await get_purchase_from_web(number)
-    formatted_data = purchase_obj.common_data_message_text()
-    formatted_data = purchase_obj.add_long_additional_info(formatted_data)
-    # if purchase_data.get('errors') is not None:  # raise exception > errors handler
-    #     await message.answer(text=formatted_data)
-    length = len(formatted_data)
-    if length > MAX_LENGTH_MESSAGE:
-        offset = 0
-        message_count = ceil(length / MAX_LENGTH_MESSAGE)
-        for _ in range(message_count - 1):
-            await message.answer(
-                text=formatted_data[offset:MAX_LENGTH_MESSAGE + offset])
-            offset += MAX_LENGTH_MESSAGE
-        await message.answer(text=formatted_data[offset:],
-                             reply_markup=await get_inline_button(number))
-    else:
-        await message.answer(text=formatted_data,
-                             reply_markup=await get_inline_button(number))
+    try:
+        purchase_obj = await get_purchase_from_web(number)
+        formatted_data = purchase_obj.common_data_message_text()
+        formatted_data = purchase_obj.add_long_additional_info(formatted_data)
+        length = len(formatted_data)
+        if length > MAX_LENGTH_MESSAGE:
+            offset = 0
+            message_count = ceil(length / MAX_LENGTH_MESSAGE)
+            for _ in range(message_count - 1):
+                await message.answer(
+                    text=formatted_data[offset:MAX_LENGTH_MESSAGE + offset])
+                offset += MAX_LENGTH_MESSAGE
+            await message.answer(text=formatted_data[offset:],
+                                 reply_markup=add_subscription_button)
+        else:
+            await message.answer(text=formatted_data,
+                                 reply_markup=add_subscription_button)
+    except PurchaseNotFoundError:
+        await message.answer(text=NOT_FOUND_MESSAGE)
+    except ParserConnectError:
+        await message.answer(text=REQUEST_ERROR_MESSAGE)
 
 
 @router.callback_query(F.data == 'add_subscription')

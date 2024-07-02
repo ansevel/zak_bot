@@ -6,3 +6,8 @@ class BotError(Exception):
 class ParserConnectError(BotError):
     """Connection error during parser request"""
     pass
+
+
+class PurchaseNotFoundError(BotError):
+    """If parser resonse status is 404"""
+    pass

@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 from app.constants.info_messages import BAD_RESPONSE, NO_RESPONSE
 from app.constants.request import HEADERS, URL_PURCHASE_PREFIX
-from app.core.exceptions import ParserConnectError
+from app.core.exceptions import ParserConnectError, PurchaseNotFoundError
 from app.schemas.purchase import AdditionalInfo, Purchase
 
 
@@ -22,9 +22,9 @@ async def get_response(number: str) -> httpx.Response:
 async def get_purchase_from_web(number: str) -> Purchase:
     response = await get_response(number)
     if response is None:
-        return {'errors': NO_RESPONSE}
+        raise ParserConnectError
     if response.status_code != HTTPStatus.OK:
-        return {'errors': BAD_RESPONSE}
+        raise PurchaseNotFoundError
     return await parse_purchase(response)
 
 

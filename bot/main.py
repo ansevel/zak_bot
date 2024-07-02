@@ -6,7 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from app.core.config import settings
-from app.handlers import other_handlers, user_handlers
+from app.handlers import other_handlers, user_handlers, errors
 from app.keyboards.main_menu import set_main_menu
 
 logger = logging.getLogger(__name__)
@@ -27,8 +27,11 @@ async def main():
 
     await bot.delete_my_commands()
     await set_main_menu(bot)
-    dp.include_router(user_handlers.router)
-    dp.include_router(other_handlers.router)
+    dp.include_routers(
+        user_handlers.router,
+        other_handlers.router,
+        errors.router,
+    )
 
     await dp.start_polling(bot)
 
