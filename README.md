@@ -11,3 +11,17 @@
 - Aiogram 3.7.0
 - SQLAlchemy + Alembic
 - PostgreSQL
+- Docker
+
+## Локальный запуск
+
+- Клонировать репозиторий
+- В папке bot создать файл .env (см. env.example)
+- Поднять контейнеры с ботом и базой данных
+```
+docker compose -f docker-compose.local.yml up
+```
+- При первом запуске выполнить миграции для создания таблиц в БД
+```
+docker exec bot alembic upgrade head
+```
