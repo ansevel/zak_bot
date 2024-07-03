@@ -11,3 +11,7 @@ class ParserConnectError(BotError):
 class PurchaseNotFoundError(BotError):
     """If parser resonse status is 404"""
     pass
+
+
+class InputError(BotError):
+    """If input data is unacceptable"""

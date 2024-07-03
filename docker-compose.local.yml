@@ -8,4 +8,16 @@ services:
     volumes:
       - db_data:/var/lib/postgres/data/
     env_file:
-      - ./.env
+      - ./bot/.env
+
+  bot:
+    build: ./bot/
+    ports:
+      - 8080:8080
+    env_file:
+      - ./bot/.env
+    depends_on:
+      - db
+
+volumes:
+  db_data:

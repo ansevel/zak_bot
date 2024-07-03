@@ -5,14 +5,16 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message
 
 from app.constants.common import MAX_LENGTH_MESSAGE
-from app.constants.errors_messages import (NOT_FOUND_MESSAGE,
+from app.constants.errors_messages import (INVALID_INPUT_MESSAGE,
+                                           NOT_FOUND_MESSAGE,
                                            REQUEST_ERROR_MESSAGE)
 from app.constants.info_messages import (EMPTY_LIST, HELP_MESSAGE,
                                          START_MESSAGE, SUBSCRIPTION_ADDED,
                                          SUBSCRIPTION_DELETED, LIST)
 from app.core.config import settings
 from app.core.db import AsyncSessionLocal
-from app.core.exceptions import ParserConnectError, PurchaseNotFoundError
+from app.core.exceptions import (InputError, ParserConnectError,
+                                 PurchaseNotFoundError)
 from app.crud.purchase import (preference_crud, purchase_crud,
                                restriction_crud, requirement_crud)
 from app.crud.user import user_crud
@@ -82,9 +84,10 @@ async def command_list_process(message: Message):
 
 @router.message()
 async def find_purchase(message: Message):
-    number = get_purchse_num_from_user(message.text)
-    if number is None:
-        await message.answer(text='Здесь будет ошибка введенных данных')
+    try:
+        number = get_purchse_num_from_user(message.text)
+    except AttributeError:
+        message.answer(text=INVALID_INPUT_MESSAGE)
     try:
         purchase_obj = await get_purchase_from_web(number)
         formatted_data = purchase_obj.common_data_message_text()
